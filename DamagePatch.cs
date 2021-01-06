@@ -28,6 +28,7 @@ namespace DeathCounter
         public static ConcurrentDictionary<ulong, int> KillStreak = new ConcurrentDictionary<ulong, int>();
         public static ulong _lastKiller;
 
+        private static readonly Config Config = Core.Instance.Config;
 
         public static void Init()
         {
@@ -47,7 +48,7 @@ namespace DeathCounter
             string causeOfDeath = "";
             if (character.Integrity - info.Amount > 0) return;
             victim = character?.DisplayName;
-            causeOfDeath = info.Type.String;
+            if (info.Type != null) causeOfDeath = info.Type.String;
             if (string.IsNullOrEmpty(causeOfDeath) || string.IsNullOrEmpty(victim)) return;
             var attackingIdentity = MySession.Static.Players.TryGetIdentity(info.AttackerId);
             var steamId = MySession.Static.Players.TryGetSteamId(character.GetIdentity().IdentityId);
@@ -60,11 +61,13 @@ namespace DeathCounter
                         attackingIdentity = MySession.Static.Players.TryGetIdentity(block.CubeGrid.BigOwners.FirstOrDefault());
                         break;
                     case MyVoxelBase _:
+                        if (!Config.AnnounceCollisionDeath) return;
                         causeOfDeath = "Smashed into";
                         victim = "a voxel";
                         attackingIdentity = character.GetIdentity();
                         break;
                     case MyCubeGrid grid:
+                        if (!Config.AnnounceCollisionDeath) return;
                         causeOfDeath = "Rammed";
                         attackingIdentity = MySession.Static.Players.TryGetIdentity(grid.BigOwners.FirstOrDefault());
                         break;
@@ -77,7 +80,7 @@ namespace DeathCounter
                 }
 
             }
-            if (causeOfDeath.Equals("suicide", StringComparison.OrdinalIgnoreCase))
+            if (causeOfDeath.Equals("suicide", StringComparison.OrdinalIgnoreCase) && Config.AnnounceSuicide)
             {
                 causeOfDeath = "Committed Suicide";
                 victim = string.Empty;
